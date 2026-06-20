@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的 Discord 動態網頁</title>
+    <title>AI 網頁產生器</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f172a; 
+        /* 預設的等待畫面樣式 */
+        body.loading-mode {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #0f172a;
             color: #f8fafc;
             display: flex;
             justify-content: center;
@@ -16,47 +17,36 @@
             margin: 0;
         }
         .card {
-            background: #1e293b; 
+            background: #1e293b;
             padding: 40px;
             border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             text-align: center;
-            max-width: 550px;
-            width: 90%;
-            border: 1px solid #334155;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
-        h1 { 
-            color: #5865F2; 
-            margin-bottom: 20px;
-            font-size: 2.2rem;
-        } 
-        p { 
-            color: #cbd5e1; 
-            font-size: 1.3rem; 
-            line-height: 1.6;
-            white-space: pre-wrap; 
-        }
+        h1 { color: #5865F2; }
     </style>
 </head>
-<body>
+<body class="loading-mode">
 
-    <div class="card">
-        <h1 id="web-title">正在連線至 Firebase...</h1>
-        <p id="web-content">請稍候，正在同步最新聊天內容...</p>
+    <div id="init-screen" class="card">
+        <h1>🤖 AI 網頁產生器已就緒</h1>
+        <p>請在 Discord 中輸入指令，Gemini 寫好的網站會直接在這裡顯現！</p>
     </div>
+
+    <div id="ai-web-container"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyCNk1vE7vubqoYEtn3HGzeabolYq18619A", 
+            apiKey: "AIzaSyCNk1vE7vubqoYEtn3HGzeabolYq18619A",
             authDomain: "b-bot-website.firebaseapp.com",
             databaseURL: "https://b-bot-website-default-rtdb.asia-southeast1.firebasedatabase.app/",
             projectId: "b-bot-website",
             storageBucket: "b-bot-website.appspot.com",
-            messagingSenderId: "508997126688", 
-            appId: "1:508997126688:web:55fb45728235763e808a45" 
+            messagingSenderId: "508997126688",
+            appId: "1:508997126688:web:55fb45728235763e808a45"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -65,12 +55,19 @@
 
         onValue(messageRef, (snapshot) => {
             if (snapshot.exists()) {
-                const data = snapshot.val(); 
-                document.getElementById('web-title').innerText = data.title;
-                document.getElementById('web-content').innerText = data.content;
-            } else {
-                document.getElementById('web-title').innerText = "🤖 機器人準備就緒！";
-                document.getElementById('web-content').innerText = "請在 Discord 中跟機器人說話，Gemini 生成的內容會立刻出現在這裡。";
+                const data = snapshot.val();
+                
+                // 如果偵測到 Firebase 裡面有 Gemini 寫好的網頁程式碼
+                if (data.html_code) {
+                    // 1. 拔掉原本的深色背景限制
+                    document.body.className = ""; 
+                    // 2. 隱藏初始畫面
+                    document.getElementById('init-screen').style.display = 'none';
+                    
+                    // 3. 施展魔法：把 Gemini 的 HTML 塞進去，並強制執行裡面的 CSS 樣式
+                    const container = document.getElementById('ai-web-container');
+                    container.innerHTML = data.html_code;
+                }
             }
         });
     </script>
