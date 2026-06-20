@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的 Discord 動態網頁</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a; 
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: #1e293b; 
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 550px;
+            width: 90%;
+            border: 1px solid #334155;
+        }
+        h1 { 
+            color: #5865F2; 
+            margin-bottom: 20px;
+            font-size: 2.2rem;
+        } 
+        p { 
+            color: #cbd5e1; 
+            font-size: 1.3rem; 
+            line-height: 1.6;
+            white-space: pre-wrap; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1 id="web-title">正在連線至 Firebase...</h1>
+        <p id="web-content">請稍候，正在同步最新聊天內容...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        // 這裡已經把你所有的資料庫資訊與密鑰完整填入囉！
+        const firebaseConfig = {
+            apiKey: "AIzaSyCNk1vE7vubqoYEtn3HGzeabolYq18619A", 
+            authDomain: "b-bot-website.firebaseapp.com",
+            databaseURL: "https://b-bot-website-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "b-bot-website",
+            storageBucket: "b-bot-website.appspot.com",
+            messagingSenderId: "508997126688", 
+            appId: "1:508997126688:web:55fb45728235763e808a45" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const messageRef = ref(db, 'botMessage');
+
+        onValue(messageRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val(); 
+                document.getElementById
