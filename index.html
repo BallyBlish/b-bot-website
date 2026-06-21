@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 網頁產生器</title>
+    <title>AI 盲盒遊戲機</title>
     <style>
-        /* 預設的等待畫面樣式 */
         body.loading-mode {
             font-family: 'Segoe UI', sans-serif;
             background-color: #0f172a;
@@ -29,11 +28,9 @@
 <body class="loading-mode">
 
     <div id="init-screen" class="card">
-        <h1>🤖 AI 網頁產生器已就緒</h1>
-        <p>請在 Discord 中輸入指令，Gemini 寫好的網站會直接在這裡顯現！</p>
+        <h1 id="status-title">🎲 AI 盲盒遊戲機已就緒</h1>
+        <p id="status-desc">請在 Discord 輸入 <b>!遊戲</b>，這裡會立刻變成隨機小遊戲！</p>
     </div>
-
-    <div id="ai-web-container"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -57,16 +54,26 @@
             if (snapshot.exists()) {
                 const data = snapshot.val();
                 
-                // 如果偵測到 Firebase 裡面有 Gemini 寫好的網頁程式碼
-                if (data.html_code) {
-                    // 1. 拔掉原本的深色背景限制
+                if (data.status === "thinking") {
+                    // 顯示讀取中
+                    document.body.className = "loading-mode";
+                    document.body.innerHTML = `
+                        <div class="card">
+                            <h1>🎮 Gemini 正在拼命寫遊戲中...</h1>
+                            <p>正在隨機選取經典遊戲與美術風格，請等候 5-10 秒...</p>
+                        </div>
+                    `;
+                } 
+                else if (data.html_code && data.status === "done") {
+                    // 🌟 核心修正：利用 range.createContextualFragment 迫使瀏覽器強行執行塞進來的全部 JavaScript！
                     document.body.className = ""; 
-                    // 2. 隱藏初始畫面
-                    document.getElementById('init-screen').style.display = 'none';
+                    document.body.innerHTML = ""; // 徹底清空原本的等待畫面
                     
-                    // 3. 施展魔法：把 Gemini 的 HTML 塞進去，並強制執行裡面的 CSS 樣式
-                    const container = document.getElementById('ai-web-container');
-                    container.innerHTML = data.html_code;
+                    const range = document.createRange();
+                    range.selectNode(document.body);
+                    const documentFragment = range.createContextualFragment(data.html_code);
+                    
+                    document.body.appendChild(documentFragment);
                 }
             }
         });
