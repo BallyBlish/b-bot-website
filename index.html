@@ -4,32 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 盲盒遊戲機</title>
+    <link href="https://unpkg.com/nes.css@latest/css/nes.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body.loading-mode {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .card {
-            background: #1e293b;
-            padding: 40px;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        h1 { color: #5865F2; }
+        body { background-color: #0f172a; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        #main-card { background: #1e293b; padding: 30px; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); max-width: 90vw; }
+        #game-container { background: #000; border: 4px solid #fff; min-width: 400px; min-height: 400px; position: relative; margin-top: 20px; color: #fff; font-family: 'Press Start 2P', monospace; }
+        .status-msg { font-size: 1.2em; color: #38bdf8; margin: 10px 0; }
     </style>
 </head>
-<body class="loading-mode">
+<body>
 
-    <div id="init-screen" class="card">
-        <h1 id="status-title">🎲 AI 盲盒遊戲機已就緒</h1>
-        <p id="status-desc">請在 Discord 輸入 <b>!遊戲</b>，這裡會立刻變成隨機小遊戲！</p>
+    <div id="main-card">
+        <h1 style="color: #5865F2; margin: 0;">🎲 AI 經典盲盒遊戲機</h1>
+        <div id="status" class="status-msg">請在 Discord 輸入 !遊戲 開始孵化...</div>
+        
+        <div id="game-container">
+            <div style="padding: 100px 20px;">等待 AI 注入遊戲世界...</div>
+        </div>
     </div>
 
     <script type="module">
@@ -50,30 +42,34 @@
         const db = getDatabase(app);
         const messageRef = ref(db, 'botMessage');
 
+        let currentScript = null;
+
         onValue(messageRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.val();
-                
-                if (data.status === "thinking") {
-                    // 顯示讀取中
-                    document.body.className = "loading-mode";
-                    document.body.innerHTML = `
-                        <div class="card">
-                            <h1>🎮 Gemini 正在拼命寫遊戲中...</h1>
-                            <p>正在隨機選取經典遊戲與美術風格，請等候 5-10 秒...</p>
-                        </div>
-                    `;
+                const statusDiv = document.getElementById('status');
+                const container = document.getElementById('game-container');
+
+                if (data.status === "thinking_ui") {
+                    statusDiv.innerText = "🧠 階段 1：AI 正在瘋狂構思並打造遊戲的 UI 介面...";
                 } 
-                else if (data.html_code && data.status === "done") {
-                    // 🌟 核心修正：利用 range.createContextualFragment 迫使瀏覽器強行執行塞進來的全部 JavaScript！
-                    document.body.className = ""; 
-                    document.body.innerHTML = ""; // 徹底清空原本的等待畫面
+                elif (data.status === "thinking_js") {
+                    statusDiv.innerText = "⚡ 階段 2：介面完成！AI 正在灌注核心 JavaScript 遊戲靈魂...";
+                    // 注入 HTML 身體
+                    if (data.html_code) container.innerHTML = data.html_code;
+                } 
+                elif (data.status === "done") {
+                    statusDiv.innerText = "✨ 盲盒孵化成功！請點擊畫面開始遊玩！";
                     
-                    const range = document.createRange();
-                    range.selectNode(document.body);
-                    const documentFragment = range.createContextualFragment(data.html_code);
-                    
-                    document.body.appendChild(documentFragment);
+                    // 移除舊的 JS 大腦以免衝突
+                    if (currentScript) currentScript.remove();
+
+                    // 注入新的 JS 大腦
+                    if (data.js_code) {
+                        currentScript = document.createElement('script');
+                        currentScript.text = data.js_code + "\nif(typeof initGame === 'function'){ initGame(); }";
+                        document.body.appendChild(currentScript);
+                    }
                 }
             }
         });
